@@ -41,16 +41,15 @@
 
     // Inicializa o Cliente do Banco de Dados
     // Se as chaves estiverem vazias, o sistema não vai rodar.
-    let supabase = null;
-    try {
-        if (SUPABASE_URL !== 'COLE_SUA_URL_DO_PROJETO_AQUI' && window.supabase) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        } else {
-            console.warn("⚠️ ATENÇÃO: Supabase não configurado. O sistema vai rodar, mas não vai salvar dados.");
+        let supabase = null;
+        try {
+            if (window.supabase) {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log("✅ Supabase iniciado com sucesso!");
+            }
+        } catch (e) {
+            console.error("Erro ao iniciar Supabase:", e);
         }
-    } catch (e) {
-        console.error("Erro ao iniciar Supabase:", e);
-    }
     // =================================================================================
 
     // --- CONSTANTES ---
@@ -408,6 +407,28 @@
       const [isFormModalOpen, setIsFormModalOpen] = useState(false);
       const [productToEdit, setProductToEdit] = useState(null);
       const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+      
+    useEffect(() => {
+        async function carregarProdutosDoBanco() {
+            if (!supabase) {
+            console.warn("⚠️ Supabase não iniciado, ignorando products.");
+            return;
+            }
+            const { data, error } = await supabase
+            .from("produtos")
+            .select("*");
+
+            if (error) {
+            console.error("Erro ao buscar produtos:", error);
+            return;
+            }
+
+            setProducts(data || []);
+        }
+
+        carregarProdutosDoBanco();
+        }, []);
+
 
       const fetchProducts = useCallback(async () => {
         if (!token) return;
