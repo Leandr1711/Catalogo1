@@ -223,49 +223,132 @@
 
     const ProductModal = ({ product, onClose }) => {
       if (!product) return null;
+      
       const [activeImage, setActiveImage] = useState(product.imagens ? product.imagens[0] : "");
-      useEffect(() => { if(product && product.imagens && product.imagens.length > 0) setActiveImage(product.imagens[0]); }, [product]);
+      const [isZoomed, setIsZoomed] = useState(false); // Estado para controlar o Zoom Tela Cheia
+
+      // Atualiza a imagem ativa quando o produto muda
+      useEffect(() => { 
+          if(product && product.imagens && product.imagens.length > 0) setActiveImage(product.imagens[0]); 
+      }, [product]);
 
       return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="bg-[#16a34a] px-6 py-4 flex justify-between items-center shrink-0">
-              <h2 className="text-xl font-bold text-white">{product.nome}</h2>
-              <button onClick={onClose} className="text-white hover:text-green-200">✕</button>
-            </div>
-            <div className="p-8 overflow-y-auto modal-scroll max-h-[75vh]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="flex flex-col">
-                  <div className="w-full h-72 rounded-lg overflow-hidden border border-gray-200 mb-4 bg-gray-50 flex items-center justify-center">
-                    {activeImage ? <img src={activeImage} alt={product.nome} className="w-full h-full object-contain" /> : <span className="text-gray-400">Sem imagem</span>}
-                  </div>
-                  <div className="flex gap-3 mb-6 overflow-x-auto">
-                    {product.imagens && product.imagens.map((img, idx) => (
-                      <div key={idx} onClick={() => setActiveImage(img)} className={`w-16 h-16 rounded-md overflow-hidden cursor-pointer border-2 transition-all flex-shrink-0 ${activeImage === img ? 'border-green-500 ring-2 ring-green-100' : 'border-gray-200 hover:border-green-300'}`}>
-                        <img src={img} className="w-full h-full object-cover" />
+        <>
+          {/* MODAL PADRÃO */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+              <div className="bg-[#16a34a] px-6 py-4 flex justify-between items-center shrink-0">
+                <h2 className="text-xl font-bold text-white">{product.nome}</h2>
+                <button onClick={onClose} className="text-white hover:text-green-200 font-bold text-xl">✕</button>
+              </div>
+              
+              <div className="p-8 overflow-y-auto modal-scroll max-h-[85vh]">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  
+                  {/* COLUNA DA ESQUERDA - IMAGENS */}
+                  <div className="flex flex-col">
+                    {/* IMAGEM PRINCIPAL 
+                        - Cursor vira Lupa (cursor-zoom-in)
+                        - Efeito Hover suave (scale)
+                        - Clique ativa o modo Tela Cheia
+                    */}
+                    <div 
+                        className="w-full h-96 rounded-lg overflow-hidden border border-gray-200 mb-4 bg-white flex items-center justify-center relative shadow-sm group cursor-zoom-in"
+                        onClick={() => setIsZoomed(true)}
+                        title="Clique para ampliar em tela cheia"
+                    >
+                      {activeImage ? (
+                          <img 
+                            src={activeImage} 
+                            alt={product.nome} 
+                            className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-110" 
+                          />
+                      ) : (
+                          <span className="text-gray-400">Sem imagem</span>
+                      )}
+                      
+                      {/* Dica visual de zoom */}
+                      <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                        Clique para ampliar 🔍
                       </div>
-                    ))}
+                    </div>
+                    
+                    {/* Miniaturas */}
+                    <div className="flex gap-3 mb-6 overflow-x-auto py-2">
+                      {product.imagens && product.imagens.map((img, idx) => (
+                        <div key={idx} onClick={() => setActiveImage(img)} 
+                             className={`w-20 h-20 rounded-md overflow-hidden cursor-pointer border-2 transition-all flex-shrink-0 bg-white
+                             ${activeImage === img ? 'border-green-500 ring-2 ring-green-100 scale-105' : 'border-gray-200 hover:border-green-300 opacity-80 hover:opacity-100'}`}>
+                          <img src={img} className="w-full h-full object-contain p-1" />
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="mt-auto self-start">
+                        <span className="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-full text-sm font-semibold border border-gray-200 shadow-sm">
+                          {product.categoria}
+                        </span>
+                    </div>
                   </div>
-                  <div className="mt-auto self-start"><span className="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-full text-sm font-semibold border border-gray-200 shadow-sm">{product.categoria}</span></div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">Especificações</h3>
-                  <div className="rounded-lg border border-gray-100 overflow-hidden text-sm">
-                    {product.especificacoes && Object.entries(product.especificacoes).map(([key, value], index) => (
-                      <div key={key} className={`flex justify-between py-3 px-4 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
-                        <span className="font-bold text-gray-600 capitalize">{key.replace(/_/g, ' ')}:</span>
-                        <span className="text-gray-800 text-right ml-4">{value}</span>
-                      </div>
-                    ))}
+
+                  {/* COLUNA DA DIREITA - DADOS */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-3 border-b pb-2">Especificações Técnicas</h3>
+                    <div className="rounded-lg border border-gray-100 overflow-hidden text-sm shadow-sm">
+                      {product.especificacoes && Object.entries(product.especificacoes).map(([key, value], index) => (
+                        <div key={key} className={`flex justify-between py-3 px-4 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                          <span className="font-bold text-gray-600 capitalize">{key.replace(/_/g, ' ')}:</span>
+                          <span className="text-gray-800 text-right ml-4 font-medium">{value}</span>
+                        </div>
+                      ))}
+                      {(!product.especificacoes || Object.keys(product.especificacoes).length === 0) && (
+                          <div className="p-4 text-gray-400 text-center italic">Sem especificações cadastradas.</div>
+                      )}
+                    </div>
+                    
+                    <div className="mt-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <h4 className="text-blue-800 font-bold text-sm mb-1">Descrição Interna</h4>
+                        <p className="text-blue-900 text-sm">{product.descricao}</p>
+                    </div>
                   </div>
+
                 </div>
               </div>
             </div>
           </div>
-        </div>
+
+          {/* === SUPER ZOOM (LIGHTBOX) === 
+              Só aparece se isZoomed for TRUE.
+              Fica por cima de TUDO (z-index 60).
+          */}
+          {isZoomed && (
+            <div 
+                className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 animate-fade-in"
+                onClick={() => setIsZoomed(false)} // Fecha ao clicar fora
+            >
+                {/* Botão Fechar Gigante */}
+                <button 
+                    onClick={() => setIsZoomed(false)}
+                    className="absolute top-5 right-5 text-white/70 hover:text-white text-5xl font-light focus:outline-none z-50"
+                >
+                    &times;
+                </button>
+
+                {/* Imagem em Resolução Máxima */}
+                <img 
+                    src={activeImage} 
+                    className="max-w-full max-h-full object-contain shadow-2xl rounded-sm"
+                    onClick={(e) => e.stopPropagation()} // Clicar na imagem não fecha
+                />
+                
+                <p className="absolute bottom-5 text-white/50 text-sm">Pressione ESC ou clique fora para fechar</p>
+            </div>
+          )}
+        </>
       );
     };
 
+    // --- MODAL ADICIONAR / EDITAR (COM 4 FOTOS) ---
     const ProductFormModal = ({ isOpen, onClose, onSave, productToEdit }) => {
       if (!isOpen) return null;
       const [tipoProduto, setTipoProduto] = useState('Tela');
@@ -274,10 +357,14 @@
       useEffect(() => {
         if (productToEdit) {
           setTipoProduto(productToEdit.categoria);
+          // Carrega as imagens existentes nos campos certos
+          const imgs = productToEdit.imagens || [];
           setForm({
             nome: productToEdit.nome,
-            foto1: productToEdit.imagens ? productToEdit.imagens[0] : '',
-            foto2: productToEdit.imagens ? productToEdit.imagens[1] : '',
+            foto1: imgs[0] || '',
+            foto2: imgs[1] || '',
+            foto3: imgs[2] || '',
+            foto4: imgs[3] || '',
             ...productToEdit.especificacoes
           });
         } else {
@@ -291,17 +378,23 @@
       
       const handleSubmit = (e) => {
         e.preventDefault();
-        const { nome, foto1, foto2, plug_imagem, ...specs } = form;
-        const mainImage = foto1 || plug_imagem || "https://placehold.co/400x300?text=Sem+Imagem";
-        const secondaryImage = foto2;
-        const imgs = secondaryImage ? [mainImage, secondaryImage] : [mainImage];
+        // Remove campos de controle para não irem para as especificações
+        const { nome, foto1, foto2, foto3, foto4, plug_imagem, ...specs } = form;
         
+        // Junta todas as fotos em uma lista limpa (remove vazios)
+        // Se for fonte e tiver plug_imagem antigo, usa como fallback
+        const mainImage = foto1 || plug_imagem;
+        const imagensFinais = [mainImage, foto2, foto3, foto4].filter(img => img && img.trim() !== '');
+        
+        // Se não tiver nenhuma imagem, coloca um placeholder
+        if (imagensFinais.length === 0) imagensFinais.push("https://placehold.co/400x300?text=Sem+Imagem");
+
         const productData = {
           id: productToEdit?.id, 
           nome: nome || `${tipoProduto} ${form.marca || ''} ${form.modelo || ''}`,
           categoria: tipoProduto,
           descricao: `Produto ${form.marca || ''}. SKU: ${form.sku || 'N/A'}`,
-          imagens: imgs,
+          imagens: imagensFinais,
           especificacoes: specs
         };
         onSave(productData);
@@ -309,6 +402,7 @@
         setForm({});
       };
 
+      // Campos específicos de cada categoria
       const renderFields = () => {
         switch (tipoProduto) {
           case 'Teclado':
@@ -321,7 +415,6 @@
                 <InputField label="Cor" name="cor" value={form.cor} onChange={handleChange} />
                 <SelectField label="Moldura" name="moldura" options={['Com Moldura', 'Sem Moldura']} value={form.moldura} onChange={handleChange} />
                 <SelectField label="Backlight" name="backlight" options={['Sim', 'Não']} value={form.backlight} onChange={handleChange} />
-                <InputField label="Foto URL" name="foto1" value={form.foto1} onChange={handleChange} />
               </>
             );
           case 'Bateria':
@@ -333,7 +426,6 @@
                 <InputField label="Capacidade (mAh)" name="capacidade" value={form.capacidade} onChange={handleChange} />
                 <InputField label="Cor" name="cor" value={form.cor} onChange={handleChange} />
                 <InputField label="Tipo" name="tipo" value={form.tipo} onChange={handleChange} />
-                <InputField label="Foto URL" name="foto1" value={form.foto1} onChange={handleChange} />
               </>
             );
           case 'Fonte':
@@ -344,7 +436,6 @@
                 <InputField label="Amperagem (A)" name="amperagem" value={form.amperagem} onChange={handleChange} />
                 <InputField label="Potência (W)" name="potencia" value={form.potencia} onChange={handleChange} />
                 <InputField label="Conector" name="conector" value={form.conector} onChange={handleChange} />
-                <InputField label="Foto URL" name="foto1" value={form.foto1} onChange={handleChange} />
               </>
             );
           default: // Tela
@@ -358,7 +449,6 @@
                 <InputField label="Conector" name="conector" value={form.conector} onChange={handleChange} />
                 <SelectField label="Fixação" name="fixacao" options={['Abas', 'Sem Fixação']} value={form.fixacao} onChange={handleChange} />
                 <SelectField label="Acabamento" name="acabamento" options={['Brilhante', 'Fosco']} value={form.acabamento} onChange={handleChange} />
-                <InputField label="Foto URL" name="foto1" value={form.foto1} onChange={handleChange} />
               </>
             );
         }
@@ -373,20 +463,45 @@
             </div>
             <div className="p-6 overflow-y-auto modal-scroll bg-white">
               <div className="border border-gray-200 rounded-lg p-5 mb-8 bg-white shadow-sm">
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Categoria</label>
-                <select className="w-full border p-2 rounded" value={tipoProduto} onChange={handleTypeChange} disabled={!!productToEdit}>
-                  {Object.values(Category).map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <div className="mt-4">
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Nome Personalizado (Opcional)</label>
-                    <input name="nome" value={form.nome || ''} onChange={handleChange} className="w-full border p-2 rounded" placeholder="Preencha se quiser sobrescrever o nome automático" />
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Configuração Básica</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-xs text-gray-500 block mb-1">Categoria</label>
+                        <select className="w-full border p-2 rounded bg-gray-50" value={tipoProduto} onChange={handleTypeChange} disabled={!!productToEdit}>
+                        {Object.values(Category).map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="text-xs text-gray-500 block mb-1">Nome Personalizado (Opcional)</label>
+                        <input name="nome" value={form.nome || ''} onChange={handleChange} className="w-full border p-2 rounded" placeholder="Sobrescrever nome automático" />
+                    </div>
                 </div>
               </div>
-              <form onSubmit={handleSubmit}><div className="grid grid-cols-1 md:grid-cols-3 gap-4">{renderFields()}</div></form>
+              
+              <form onSubmit={handleSubmit}>
+                {/* Campos de Especificação */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    {renderFields()}
+                </div>
+
+                {/* Área Exclusiva para Fotos (4 Campos) */}
+                <div className="border-t border-gray-100 pt-6">
+                    <h3 className="text-sm font-bold text-gray-700 uppercase mb-4 flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        Galeria de Imagens (URLs)
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <InputField label="Foto 1 (Principal)" name="foto1" placeholder="https://..." value={form.foto1} onChange={handleChange} />
+                        <InputField label="Foto 2" name="foto2" placeholder="https://..." value={form.foto2} onChange={handleChange} />
+                        <InputField label="Foto 3" name="foto3" placeholder="https://..." value={form.foto3} onChange={handleChange} />
+                        <InputField label="Foto 4" name="foto4" placeholder="https://..." value={form.foto4} onChange={handleChange} />
+                    </div>
+                </div>
+              </form>
             </div>
             <div className="border-t border-gray-100 p-6 bg-white shrink-0 flex justify-end gap-3">
-               <button onClick={onClose} className="px-6 py-2 border rounded">Cancelar</button>
-               <button onClick={handleSubmit} className="px-6 py-2 bg-[#16a34a] text-white rounded font-bold">Salvar</button>
+               <button onClick={onClose} className="px-6 py-2 border rounded hover:bg-gray-50 text-gray-700">Cancelar</button>
+               <button onClick={handleSubmit} className="px-6 py-2 bg-[#16a34a] text-white rounded font-bold hover:bg-green-700 shadow-lg">Salvar Produto</button>
             </div>
           </div>
         </div>
@@ -634,3 +749,4 @@
   </script>
 </body>
 </html>
+
