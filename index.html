@@ -439,15 +439,38 @@
 
       useEffect(() => {
         let result = products;
-        if (selectedCategory !== 'Todos') result = result.filter(p => p.categoria === selectedCategory);
+
+        // 1. Filtro por Categoria
+        if (selectedCategory !== 'Todos') {
+          result = result.filter(p => p.categoria === selectedCategory);
+        }
+
+        // 2. Filtro por Texto (Busca)
         if (searchQuery) {
           const lowerQuery = searchQuery.toLowerCase();
-          result = result.filter(p => 
-            p.nome.toLowerCase().includes(lowerQuery) || 
-            p.descricao.toLowerCase().includes(lowerQuery) ||
-            Object.values(p.especificacoes || {}).some(val => String(val).toLowerCase().includes(lowerQuery))
-          );
+          
+          result = result.filter(p => {
+            // Proteção: Garante que os campos existem antes de usar
+            const nome = p.nome ? p.nome.toLowerCase() : '';
+            const desc = p.descricao ? p.descricao.toLowerCase() : '';
+            
+            // Busca no Nome e Descrição
+            if (nome.includes(lowerQuery) || desc.includes(lowerQuery)) {
+              return true;
+            }
+
+            // Busca nas Especificações (com segurança extra)
+            if (p.especificacoes && typeof p.especificacoes === 'object') {
+              return Object.values(p.especificacoes).some(val => {
+                if (val === null || val === undefined) return false; // Ignora nulos
+                return String(val).toLowerCase().includes(lowerQuery);
+              });
+            }
+
+            return false;
+          });
         }
+
         setFilteredProducts(result);
       }, [products, selectedCategory, searchQuery]);
 
@@ -605,5 +628,6 @@
   </script>
 </body>
 </html>
+
 
 
