@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catalgo - bringIT (Online)</title>
+  <title>Produtos - bringIT</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -64,7 +64,7 @@
     // --- SERVIDOR (CONECTADO AO SUPABASE) ---
     const Server = {
       login: async (username, password) => {
-        return new Promise((resolve) => setTimeout(() => resolve(username === 'admin' && password === '123' ? { token: 'supabase-token' } : null), 500));
+        return new Promise((resolve) => setTimeout(() => resolve(username === 'Leandro' && password === 'Santos' ? { token: 'supabase-token' } : null), 500));
       },
 
       isAuthenticated: (token) => !!token,
@@ -498,12 +498,18 @@
       if (!token) return <LoginScreen onLogin={() => setToken(localStorage.getItem('authToken'))} />;
 
       return (
-        <div className="flex min-h-screen bg-gray-100 font-inter">
-          <aside className="w-64 bg-white fixed h-full shadow-lg z-20 flex flex-col hidden md:flex">
-            <div className="p-6 border-b border-gray-100"><div className="flex items-center gap-2 text-green-700"><div className="bg-green-600 text-white p-1.5 rounded-lg font-bold shadow-md">ERP</div><h1 className="text-xl font-bold tracking-tight">TechPart</h1></div></div>
-            <nav className="flex-1 py-6 overflow-y-auto">
+        <div className="flex min-h-screen bg-gray-50 font-inter">
+          <aside className="w-66 bg-white fixed h-full shadow-lg z-20 flex flex-col hidden md:flex ">
+            <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center gap-2 text-green-700 " >
+            <div className=" text-2xl text-green-700 p-1.5 rounded-lg font-bold">bringIT</div>
+            <h1 className="text-xs">Customer Success</h1>
+            
+            
+            </div></div>
+            <nav className="flex-1 py-6 overflow-y-auto ">
               <ul>
-                <li className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 border-r-4 ${currentView === 'dashboard' ? 'bg-green-50 text-green-700 border-green-600 font-medium' : 'text-gray-600 border-transparent hover:bg-gray-50'}`} onClick={() => setCurrentView('dashboard')}>
+                <li className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 border-r-4 ${currentView === 'dashboard' ? 'bg-green-50 text-green-700 border-green-600 font-medium' : 'text-gray-600  border-transparent hover:bg-gray-50'}`} onClick={() => setCurrentView('dashboard')}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z" /></svg><span>Dashboard</span>
                 </li>
                 <li>
@@ -578,5 +584,3 @@
   </script>
 </body>
 </html>
-
-
