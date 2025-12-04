@@ -56,7 +56,7 @@
       // 👇 COLOQUE A FUNÇÃO AQUI, LOGO ABAIXO DO CLIENTE INICIADO
       async function carregarProdutos() {
         const { data, error } = await supabase
-          .from("products")
+          .from("produtos")
           .select("*");
     
         console.log("Produtos:", data);
@@ -603,5 +603,6 @@
   </script>
 </body>
 </html>
+
 
 
