@@ -72,9 +72,32 @@
 
       getProducts: async () => {
         if (!supabase) return [];
-        const { data, error } = await supabase.from('produtos').select('*').order('created_at', { ascending: false });
-        if (error) { console.error("Erro Supabase:", error); return []; }
-        return data || [];
+        
+        // 1. Busca os dados brutos (sem ordernar pelo banco para não conflitar)
+        const { data, error } = await supabase
+            .from('produtos')
+            .select('*');
+
+        if (error) { 
+            console.error("Erro ao buscar:", error); 
+            return []; 
+        }
+
+        // 2. TratamgetProductsento de Imagens e Dados
+        const produtosTratados = data.map(p => ({
+            ...p,
+            imagens: Array.isArray(p.imagens) ? p.imagens : (p.imagens ? [p.imagens] : [])
+        }));
+
+        // 3. ORDENAÇÃO INTELIGENTE (Aqui está a mágica)
+        // O "numeric: true" faz o computador entender que 2 vem antes de 10
+        return produtosTratados.sort((a, b) => {
+            // Tenta pegar o SKU do nome, ou da coluna SKU, ou da especificação
+            const textoA = a.nome || a.sku || (a.especificacoes && a.especificacoes.sku) || '';
+            const textoB = b.nome || b.sku || (b.especificacoes && b.especificacoes.sku) || '';
+
+            return textoA.localeCompare(textoB, undefined, { numeric: true, sensitivity: 'base' });
+        });
       },
 
       addProduct: async (token, product) => {
@@ -749,4 +772,5 @@
   </script>
 </body>
 </html>
+
 
