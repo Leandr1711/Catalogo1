@@ -487,7 +487,7 @@
       const openNewModal = () => { setProductToEdit(null); setIsFormModalOpen(true); };
 
       const LoginScreen = ({ onLogin }) => {
-        const [u, setU] = useState('admin'); const [p, setP] = useState('123'); const [load, setLoad] = useState(false);
+        const [u, setU] = useState('lele'); const [p, setP] = useState('lele'); const [load, setLoad] = useState(false);
         const sub = async (e) => { e.preventDefault(); setLoad(true); const r = await Server.login(u, p); setLoad(false); if(r) { localStorage.setItem('authToken', r.token); onLogin(); } else alert('Erro: admin / 123'); };
         return (
           <div className="min-h-screen flex items-center justify-center bg-gray-100"><div className="bg-white p-8 rounded-xl shadow-lg w-96">
@@ -605,3 +605,4 @@
   </script>
 </body>
 </html>
+
