@@ -12,7 +12,7 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -36,49 +36,32 @@
     // Preencha AQUI com os dados da sua conta (da imagem que você mandou)
     // =================================================================================
     
-    const SUPABASE_URL = 'https://engvsccurmvttkerpqbs.supabase.co'; // Ex: https://xyzxyz.supabase.co
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuZ3ZzY2N1cm12dHRrZXJwcWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4MTA3NjgsImV4cCI6MjA4MDM4Njc2OH0.EzDuXmFcYavKxPD5xBCT46IRaLcxQfnJ9_C9pXxwLhc'; // Ex: eyJh... (A chave grande da imagem)
+    const SUPABASE_URL = 'https://zimsvitrbpdborfwujfg.supabase.co'; // Ex: https://xyzxyz.supabase.co
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppbXN2aXRyYnBkYm9yZnd1amZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3OTk4MDksImV4cCI6MjA4MDM3NTgwOX0.xxSYJUFxUtAZMbZ_aq0c-muZglov-W4X3oaJO4fTFSM'; // Ex: eyJh... (A chave grande da imagem)
 
     // Inicializa o Cliente do Banco de Dados
     // Se as chaves estiverem vazias, o sistema não vai rodar.
-        
-      let supabase = null;
-    
-      try {
-        if (window.supabase) {
-          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-          console.log("✅ Supabase iniciado com sucesso!");
-        }
-      } catch (err) {
-        console.error("Erro ao iniciar Supabase:", err);
-      }
-    
-      // 👇 COLOQUE A FUNÇÃO AQUI, LOGO ABAIXO DO CLIENTE INICIADO
-      async function carregarProdutos() {
-        const { data, error } = await supabase
-          .from("produtos")
-          .select("*");
-    
-        console.log("Produtos:", data);
-        console.error("Erro:", error);
-    
-        if (data) {
-          document.body.innerHTML += "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
-        }
-      }
+   let supabase = null;
 
-  // 👇 E A CHAMADA LOGO DEPOIS
-  if (supabase) carregarProdutos();
-    
-      // 👇 E A CHAMADA LOGO DEPOIS
-      if (supabase) carregarProdutos();
-        // --- CONSTANTES ---
-        const Category = {
-          SCREEN: 'Tela',
-          BATTERY: 'Bateria',
-          KEYBOARD: 'Teclado',
-          POWER_SUPPLY: 'Fonte'
-        };
+        try {
+            if (window.supabase) {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log("✅ Supabase iniciado com sucesso!");
+            } else {
+                console.warn("⚠️ Biblioteca do Supabase não carregada.");
+            }
+        } catch (e) {
+            console.error("Erro ao iniciar Supabase:", e);
+        }
+    // =================================================================================
+
+    // --- CONSTANTES ---
+    const Category = {
+      SCREEN: 'Tela',
+      BATTERY: 'Bateria',
+      KEYBOARD: 'Teclado',
+      POWER_SUPPLY: 'Fonte'
+    };
 
     // --- SERVIDOR (CONECTADO AO SUPABASE) ---
     const Server = {
@@ -603,6 +586,3 @@
   </script>
 </body>
 </html>
-
-
-
