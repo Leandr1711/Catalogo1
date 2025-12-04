@@ -3,15 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catalogo</title>
+  <title>Catalogo it</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
     .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
@@ -28,99 +31,116 @@
   <script type="text/babel" data-presets="typescript,react">
     const { useState, useEffect, useCallback } = React;
 
-    // --- CONSTANTES --- possor adicionar mais categorias conforme necessário
+    // =================================================================================
+    // ⚠️ ÁREA DE CONFIGURAÇÃO DO SUPABASE ⚠️
+    // Preencha AQUI com os dados da sua conta (da imagem que você mandou)
+    // =================================================================================
+    
+    const SUPABASE_URL = 'https://zimsvitrbpdborfwujfg.supabase.co'; // Ex: https://xyzxyz.supabase.co
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppbXN2aXRyYnBkYm9yZnd1amZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3OTk4MDksImV4cCI6MjA4MDM3NTgwOX0.xxSYJUFxUtAZMbZ_aq0c-muZglov-W4X3oaJO4fTFSM'; // Ex: eyJh... (A chave grande da imagem)
+
+    // Inicializa o Cliente do Banco de Dados
+    // Se as chaves estiverem vazias, o sistema não vai rodar.
+    let supabase = null;
+    try {
+        if (SUPABASE_URL !== 'COLE_SUA_URL_DO_PROJETO_AQUI' && window.supabase) {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } else {
+            console.warn("⚠️ ATENÇÃO: Supabase não configurado. O sistema vai rodar, mas não vai salvar dados.");
+        }
+    } catch (e) {
+        console.error("Erro ao iniciar Supabase:", e);
+    }
+    // =================================================================================
+
+    // --- CONSTANTES ---
     const Category = {
       SCREEN: 'Tela',
       BATTERY: 'Bateria',
       KEYBOARD: 'Teclado',
-      POWER_SUPPLY: 'Fonte',
-      FLAT_CABLE: 'Cabo flat'
+      POWER_SUPPLY: 'Fonte'
     };
 
-    // --- CONFIGURAÇÃO SUPABASE ---
-    const SUPABASE_URL = 'https://zimsvitrbpdborfwujfg.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppbXN2aXRyYnBkYm9yZnd1amZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3OTk4MDksImV4cCI6MjA4MDM3NTgwOX0.xxSYJUFxUtAZMbZ_aq0c-muZglov-W4X3oaJO4fTFSM';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // --- SERVIDOR MOCK ---
-    // --- SERVIDOR REAL (SUPABASE) ---
+    // --- SERVIDOR (CONECTADO AO SUPABASE) ---
     const Server = {
-    // Login simples (Simulado para manter compatibilidade com seu frontend atual)
-    login: async (username, password) => {
+      login: async (username, password) => {
         return new Promise((resolve) => setTimeout(() => resolve(username === 'admin' && password === '123' ? { token: 'supabase-token' } : null), 500));
-    },
+      },
 
-    isAuthenticated: (token) => !!token,
+      isAuthenticated: (token) => !!token,
 
-    // BUSCAR PRODUTOS (SELECT)
-    getProducts: async (token) => {
-        const { data, error } = await supabase
-        .from('produtos')
-        .select('*')
-        .order('created_at', { ascending: false }); // Mais recentes primeiro
-
-        if (error) {
-        console.error("Erro ao buscar:", error);
-        return [];
-        }
-        return data;
-    },
-
-    // ADICIONAR PRODUTO (INSERT)
-    addProduct: async (token, product) => {
-        // Removemos o ID pois o banco gera automático
-        const { id, ...prodSemId } = product; 
+      getProducts: async (token) => {
+        if (!supabase) return []; // Retorna vazio se não configurou
         
         const { data, error } = await supabase
-        .from('produtos')
-        .insert([prodSemId])
-        .select();
+          .from('produtos')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error("Erro Supabase:", error);
+          alert("Erro ao buscar produtos. Verifique o console (F12). Detalhe: " + error.message);
+          return [];
+        }
+        return data || [];
+      },
+
+      addProduct: async (token, product) => {
+        if (!supabase) { alert("Configure o Supabase no código!"); return; }
+        
+        // Remove ID (o banco cria) e garante especificações como JSON
+        const { id, ...prodSemId } = product;
+        
+        const { data, error } = await supabase
+          .from('produtos')
+          .insert([prodSemId])
+          .select();
 
         if (error) throw error;
         return data[0];
-    },
+      },
 
-    // ATUALIZAR PRODUTO (UPDATE)
-    updateProduct: async (token, product) => {
+      updateProduct: async (token, product) => {
+        if (!supabase) return;
         const { id, ...dadosParaAtualizar } = product;
         
         const { data, error } = await supabase
-        .from('produtos')
-        .update(dadosParaAtualizar)
-        .eq('id', id)
-        .select();
+          .from('produtos')
+          .update(dadosParaAtualizar)
+          .eq('id', id)
+          .select();
 
         if (error) throw error;
         return data[0];
-    },
+      },
 
-    // ADICIONAR LOTE (INSERT MANY)
-    addBatch: async (token, productsArray) => {
-        // Garante que não estamos mandando IDs manuais
+      addBatch: async (token, productsArray) => {
+        if (!supabase) return;
+        // Limpa IDs manuais
         const cleanBatch = productsArray.map(({ id, ...rest }) => rest);
         
         const { data, error } = await supabase
-        .from('produtos')
-        .insert(cleanBatch)
-        .select();
+          .from('produtos')
+          .insert(cleanBatch)
+          .select();
 
         if (error) throw error;
         return data.length;
-    },
+      },
 
-    // REMOVER PRODUTO (DELETE)
-    removeProduct: async (token, id) => {
+      removeProduct: async (token, id) => {
+        if (!supabase) return;
         const { error } = await supabase
-        .from('produtos')
-        .delete()
-        .eq('id', id);
+          .from('produtos')
+          .delete()
+          .eq('id', id);
 
         if (error) throw error;
         return true;
-    }
+      }
     };
 
-    // --- UI HELPERS ---
+    // --- COMPONENTES UI ---
     const InputField = ({ label, name, placeholder, required, value, onChange, colSpan = 1 }) => (
       <div className={colSpan > 1 ? `col-span-${colSpan} md:col-span-${colSpan}` : ''}>
         <label className="block text-sm font-semibold text-gray-600 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
@@ -169,8 +189,8 @@
     // --- MODAL DETALHES ---
     const ProductModal = ({ product, onClose }) => {
       if (!product) return null;
-      const [activeImage, setActiveImage] = useState(product.imagens[0]);
-      useEffect(() => { if(product && product.imagens.length > 0) setActiveImage(product.imagens[0]); }, [product]);
+      const [activeImage, setActiveImage] = useState(product.imagens ? product.imagens[0] : "");
+      useEffect(() => { if(product && product.imagens && product.imagens.length > 0) setActiveImage(product.imagens[0]); }, [product]);
 
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
@@ -183,10 +203,10 @@
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="flex flex-col">
                   <div className="w-full h-72 rounded-lg overflow-hidden border border-gray-200 mb-4 bg-gray-50 flex items-center justify-center">
-                    <img src={activeImage} alt={product.nome} className="w-full h-full object-cover" />
+                    {activeImage ? <img src={activeImage} alt={product.nome} className="w-full h-full object-cover" /> : <span className="text-gray-400">Sem imagem</span>}
                   </div>
                   <div className="flex gap-3 mb-6">
-                    {product.imagens.map((img, idx) => (
+                    {product.imagens && product.imagens.map((img, idx) => (
                       <div key={idx} onClick={() => setActiveImage(img)} className={`w-16 h-16 rounded-md overflow-hidden cursor-pointer border-2 transition-all ${activeImage === img ? 'border-green-500 ring-2 ring-green-100' : 'border-gray-200 hover:border-green-300'}`}>
                         <img src={img} className="w-full h-full object-cover" />
                       </div>
@@ -215,22 +235,20 @@
       );
     };
 
-    // --- MODAL ADICIONAR / EDITAR (UNIFICADO) ---
+    // --- MODAL ADICIONAR / EDITAR ---
     const ProductFormModal = ({ isOpen, onClose, onSave, productToEdit }) => {
       if (!isOpen) return null;
       
       const [tipoProduto, setTipoProduto] = useState('Tela');
       const [form, setForm] = useState({});
 
-      // Efeito para carregar dados se for edição, ou resetar se for novo
       useEffect(() => {
         if (productToEdit) {
           setTipoProduto(productToEdit.categoria);
           setForm({
             nome: productToEdit.nome,
-            foto1: productToEdit.imagens[0],
-            foto2: productToEdit.imagens[1],
-            // Espalha as especificações dentro do form para os inputs funcionarem
+            foto1: productToEdit.imagens ? productToEdit.imagens[0] : '',
+            foto2: productToEdit.imagens ? productToEdit.imagens[1] : '',
             ...productToEdit.especificacoes
           });
         } else {
@@ -239,7 +257,6 @@
         }
       }, [productToEdit, isOpen]);
 
-      // Limpa form se mudar tipo manualmente (apenas se não estiver editando ou se usuário trocar a categoria)
       const handleTypeChange = (e) => {
         setTipoProduto(e.target.value);
         if (!productToEdit) setForm({});
@@ -254,7 +271,6 @@
         const secondaryImage = foto2 || "https://picsum.photos/400/301";
         
         const productData = {
-          // Se estiver editando, mantém o ID, senão undefined (o Server cria)
           id: productToEdit?.id, 
           nome: nome || `${tipoProduto} ${form.marca || ''} ${form.modelo || ''}`,
           categoria: tipoProduto,
@@ -311,7 +327,7 @@
                 <InputField label="Plug (URL)" name="plug_imagem" value={form.plug_imagem} onChange={handleChange} />
               </>
             );
-          default: // Tela
+          default:
             return (
               <>
                 <InputField label="SKU" name="sku" required value={form.sku} onChange={handleChange} />
@@ -351,7 +367,7 @@
                         className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-gray-800 font-medium focus:ring-1 focus:ring-green-500 focus:border-green-500 outline-none bg-white" 
                         value={tipoProduto} 
                         onChange={handleTypeChange}
-                        disabled={!!productToEdit} // Trava o tipo se estiver editando para evitar quebra de dados
+                        disabled={!!productToEdit}
                       >
                         {Object.values(Category).map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
@@ -389,14 +405,13 @@
       const [isProductsSubmenuOpen, setIsProductsSubmenuOpen] = useState(true);
       const [searchQuery, setSearchQuery] = useState('');
       const [selectedProduct, setSelectedProduct] = useState(null);
-      // Modais
       const [isFormModalOpen, setIsFormModalOpen] = useState(false);
       const [productToEdit, setProductToEdit] = useState(null);
       const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
       const fetchProducts = useCallback(async () => {
         if (!token) return;
-        try { const data = await Server.getProducts(token); setProducts(data); } catch (e) { logout(); }
+        try { const data = await Server.getProducts(token); setProducts(data); } catch (e) { console.error(e); }
       }, [token]);
 
       useEffect(() => { if (token) { if (!Server.isAuthenticated(token)) logout(); else fetchProducts(); } }, [token, fetchProducts]);
@@ -417,21 +432,15 @@
 
       const logout = () => { localStorage.removeItem('authToken'); setToken(null); };
 
-      // Função unificada para Salvar (Novo ou Edição)
       const handleSaveProduct = async (productData) => {
         if (!token) return;
         try { 
-          if (productData.id) {
-            // Edição
-            await Server.updateProduct(token, productData);
-          } else {
-            // Criação
-            await Server.addProduct(token, productData); 
-          }
+          if (productData.id) await Server.updateProduct(token, productData);
+          else await Server.addProduct(token, productData); 
           fetchProducts(); 
           setCurrentView('products'); 
           setSelectedCategory('Todos');
-        } catch (e) { alert("Erro ao salvar produto"); }
+        } catch (e) { alert("Erro ao salvar produto: " + e.message); }
       };
 
       const handleImportBatch = async (batchData) => {
@@ -442,24 +451,19 @@
           fetchProducts(); 
           setCurrentView('products'); 
           setSelectedCategory('Todos'); 
-        } catch (e) { alert("Erro ao importar lote"); }
+        } catch (e) { alert("Erro ao importar lote: " + e.message); }
       };
 
       const handleRemoveProduct = async (e, id) => {
         e.stopPropagation();
-        if (window.confirm("Remover produto?")) { await Server.removeProduct(token, id); fetchProducts(); }
+        if (window.confirm("Remover produto?")) { 
+            try { await Server.removeProduct(token, id); fetchProducts(); }
+            catch(e) { alert("Erro ao remover: " + e.message); }
+        }
       };
 
-      const openEditModal = (e, product) => {
-        e.stopPropagation();
-        setProductToEdit(product);
-        setIsFormModalOpen(true);
-      };
-
-      const openNewModal = () => {
-        setProductToEdit(null);
-        setIsFormModalOpen(true);
-      };
+      const openEditModal = (e, product) => { e.stopPropagation(); setProductToEdit(product); setIsFormModalOpen(true); };
+      const openNewModal = () => { setProductToEdit(null); setIsFormModalOpen(true); };
 
       const LoginScreen = ({ onLogin }) => {
         const [u, setU] = useState('admin'); const [p, setP] = useState('123'); const [load, setLoad] = useState(false);
@@ -542,7 +546,7 @@
                   {filteredProducts.map((product) => (
                     <div key={product.id} onClick={() => setSelectedProduct(product)} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all cursor-pointer group flex flex-col h-full overflow-hidden">
                       <div className="relative h-48 bg-gray-50">
-                        <img src={product.imagens[0]} alt={product.nome} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <img src={product.imagens && product.imagens.length > 0 ? product.imagens[0] : ''} alt={product.nome} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <span className="absolute top-3 left-3 bg-white/90 text-gray-800 text-xs font-bold px-2 py-1 rounded shadow-sm">{product.categoria}</span>
                       </div>
                       <div className="p-5 flex flex-col flex-1">
@@ -551,22 +555,8 @@
                         <div className="flex justify-between items-center pt-4 border-t border-gray-50 mt-auto">
                           <span className="text-sm text-green-600 font-medium hover:underline">Detalhes</span>
                           <div className="flex gap-2">
-                            {/* Botão de EDITAR */}
-                            <button 
-                              onClick={(e) => openEditModal(e, product)}
-                              className="text-gray-400 hover:text-blue-500 hover:bg-blue-50 p-1.5 rounded-full transition-colors" 
-                              title="Editar"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                            </button>
-                            {/* Botão de REMOVER */}
-                            <button 
-                              onClick={(e) => handleRemoveProduct(e, product.id)} 
-                              className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors" 
-                              title="Remover"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            </button>
+                            <button onClick={(e) => openEditModal(e, product)} className="text-gray-400 hover:text-blue-500 hover:bg-blue-50 p-1.5 rounded-full transition-colors" title="Editar"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                            <button onClick={(e) => handleRemoveProduct(e, product.id)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors" title="Remover"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                           </div>
                         </div>
                       </div>
@@ -577,13 +567,7 @@
             )}
           </main>
           <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
-          {/* Modal agora serve para adicionar E editar */}
-          <ProductFormModal 
-            isOpen={isFormModalOpen} 
-            onClose={() => setIsFormModalOpen(false)} 
-            onSave={handleSaveProduct} 
-            productToEdit={productToEdit}
-          />
+          <ProductFormModal isOpen={isFormModalOpen} onClose={() => setIsFormModalOpen(false)} onSave={handleSaveProduct} productToEdit={productToEdit} />
           <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImport={handleImportBatch} />
         </div>
       );
