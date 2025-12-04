@@ -41,18 +41,16 @@
 
     // Inicializa o Cliente do Banco de Dados
     // Se as chaves estiverem vazias, o sistema não vai rodar.
-   let supabase = null;
-
-        try {
-            if (window.supabase) {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                console.log("✅ Supabase iniciado com sucesso!");
-            } else {
-                console.warn("⚠️ Biblioteca do Supabase não carregada.");
-            }
-        } catch (e) {
-            console.error("Erro ao iniciar Supabase:", e);
+    let supabase = null;
+    try {
+        if (SUPABASE_URL !== 'COLE_SUA_URL_DO_PROJETO_AQUI' && window.supabase) {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } else {
+            console.warn("⚠️ ATENÇÃO: Supabase não configurado. O sistema vai rodar, mas não vai salvar dados.");
         }
+    } catch (e) {
+        console.error("Erro ao iniciar Supabase:", e);
+    }
     // =================================================================================
 
     // --- CONSTANTES ---
@@ -505,7 +503,7 @@
             <div className="p-6 border-b border-gray-100">
             <div className="flex items-center gap-2 text-green-700 " >
             <div className=" text-2xl text-green-700 p-1.5 rounded-lg font-bold">bringIT</div>
-            <h1 className="text-xs">Customer Success</h1>
+            <h1 className="text-xs">CustomerSuccess</h1>
             
             
             </div></div>
