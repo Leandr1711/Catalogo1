@@ -4,14 +4,46 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Produtos - bringIT System</title>
-  
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- ========================
+       FIREBASE v8 (CDN) - must be loaded BEFORE Babel/React
+       ======================== -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <script>
+    // sua firebaseConfig (conforme você enviou)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAHp6za_KGlDvUEL4GnMLUK5llOgCOdMMk",
+      authDomain: "produtos-a5d81.firebaseapp.com",
+      projectId: "produtos-a5d81",
+      storageBucket: "produtos-a5d81.firebasestorage.app",
+      messagingSenderId: "841903119824",
+      appId: "1:841903119824:web:48cefee322161840eb2dd5",
+      measurementId: "G-YBH3SGYPC8"
+    };
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const firestore = firebase.firestore();
+      // Exponha globalmente para o código Babel/React abaixo
+      window._firebaseAuth = auth;
+      window._firebaseFirestore = firestore;
+      console.log("✅ Firebase v8 + Firestore inicializado");
+    } catch (err) {
+      console.error("Erro ao inicializar Firebase:", err);
+    }
+  </script>
+
+  <!-- React / Babel (dev builds) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
@@ -29,21 +61,9 @@
   <script type="text/babel" data-presets="typescript,react">
     const { useState, useEffect, useCallback, useMemo } = React;
 
-    // =================================================================================
-    // CONFIGURAÇÃO DO SUPABASE
-    // =================================================================================
-    const SUPABASE_URL = 'https://engvsccurmvttkerpqbs.supabase.co'; 
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuZ3ZzY2N1cm12dHRrZXJwcWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4MTA3NjgsImV4cCI6MjA4MDM4Njc2OH0.EzDuXmFcYavKxPD5xBCT46IRaLcxQfnJ9_C9pXxwLhc'; 
-
-    let supabase = null;
-    try {
-        if (window.supabase) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log("✅ Supabase iniciado com sucesso!");
-        }
-    } catch (e) {
-        console.error("Erro ao iniciar Supabase:", e);
-    }
+    // Pegue o auth e firestore inicializados no escopo global
+    const auth = window._firebaseAuth;
+    const firestore = window._firebaseFirestore;
 
     // --- CONSTANTES ---
     const Category = {
@@ -61,73 +81,103 @@
         [Category.POWER_SUPPLY]: ['voltagem', 'amperagem', 'potencia', 'conector']
     };
 
-    // --- SERVIDOR (SUPABASE) ---
+    // --- SERVIDOR (FIRESTORE) ---
     const Server = {
-      login: async (username, password) => {
-        // Mock de login para manter a simplicidade solicitada
-        return new Promise((resolve) => setTimeout(() => resolve(username === 'Leandro' && password === 'Santos' ? { token: 'supabase-mock-token' } : null), 500));
+      // login via Firebase Auth v8
+      login: async (email, password) => {
+        if (!auth) {
+          console.error("Auth do Firebase não está disponível");
+          return null;
+        }
+        try {
+          const userCred = await auth.signInWithEmailAndPassword(email, password);
+          const token = await userCred.user.getIdToken();
+          return { token, uid: userCred.user.uid };
+        } catch (e) {
+          console.warn("Falha no signIn:", e && e.code ? e.code : e);
+          return null;
+        }
       },
 
       isAuthenticated: (token) => !!token,
 
+      // retorna todos os produtos de todas as categorias em um array
       getProducts: async () => {
-        if (!supabase) return [];
-        
-        // 1. Busca os dados brutos (sem ordernar pelo banco para não conflitar)
-        const { data, error } = await supabase
-            .from('produtos')
-            .select('*');
-
-        if (error) { 
-            console.error("Erro ao buscar:", error); 
-            return []; 
+        if (!firestore) {
+          console.warn("Firestore não inicializado");
+          return [];
         }
-
-        // 2. TratamgetProductsento de Imagens e Dados
-        const produtosTratados = data.map(p => ({
-            ...p,
-            imagens: Array.isArray(p.imagens) ? p.imagens : (p.imagens ? [p.imagens] : [])
-        }));
-
-        // 3. ORDENAÇÃO INTELIGENTE (Aqui está a mágica)
-        // O "numeric: true" faz o computador entender que 2 vem antes de 10
-        return produtosTratados.sort((a, b) => {
-            // Tenta pegar o SKU do nome, ou da coluna SKU, ou da especificação
-            const textoA = a.nome || a.sku || (a.especificacoes && a.especificacoes.sku) || '';
-            const textoB = b.nome || b.sku || (b.especificacoes && b.especificacoes.sku) || '';
-
+        try {
+          const categorias = Object.values(Category);
+          const all = [];
+          // busca cada categoria e seus produtos
+          for (const cat of categorias) {
+            const colRef = firestore.collection('categorias').doc(cat).collection('produtos');
+            const snap = await colRef.get();
+            snap.forEach(doc => {
+              const data = doc.data();
+              all.push({
+                id: doc.id,
+                ...data,
+                categoria: cat,
+                imagens: Array.isArray(data.imagens) ? data.imagens : (data.imagens ? [data.imagens] : [])
+              });
+            });
+          }
+          // ordena por nome (numeric natural)
+          return all.sort((a,b) => {
+            const textoA = a.nome || '';
+            const textoB = b.nome || '';
             return textoA.localeCompare(textoB, undefined, { numeric: true, sensitivity: 'base' });
-        });
+          });
+        } catch (e) {
+          console.error("Erro ao buscar produtos do Firestore:", e);
+          return [];
+        }
       },
 
       addProduct: async (token, product) => {
-        if (!supabase) return;
-        const { id, ...prodSemId } = product;
-        const { data, error } = await supabase.from('produtos').insert([prodSemId]).select();
-        if (error) throw error;
-        return data[0];
+        if (!firestore) throw new Error("Firestore não inicializado");
+        const { id, ...rest } = product;
+        const categoria = product.categoria || Category.SCREEN;
+        const colRef = firestore.collection('categorias').doc(categoria).collection('produtos');
+        const now = firebase.firestore.FieldValue.serverTimestamp();
+        const payload = { ...rest, criadoEm: now };
+        const docRef = await colRef.add(payload);
+        const docSnap = await docRef.get();
+        return { id: docRef.id, ...docSnap.data(), categoria };
       },
 
       updateProduct: async (token, product) => {
-        if (!supabase) return;
-        const { id, ...dadosParaAtualizar } = product;
-        const { data, error } = await supabase.from('produtos').update(dadosParaAtualizar).eq('id', id).select();
-        if (error) throw error;
-        return data[0];
+        if (!firestore) throw new Error("Firestore não inicializado");
+        const { id, categoria, ...rest } = product;
+        if (!id || !categoria) throw new Error("Produto precisa de id e categoria para atualizar");
+        const docRef = firestore.collection('categorias').doc(categoria).collection('produtos').doc(id);
+        await docRef.set(rest, { merge: true });
+        const snap = await docRef.get();
+        return { id: snap.id, ...snap.data(), categoria };
       },
 
       addBatch: async (token, productsArray) => {
-        if (!supabase) return;
-        const cleanBatch = productsArray.map(({ id, ...rest }) => rest);
-        const { data, error } = await supabase.from('produtos').insert(cleanBatch).select();
-        if (error) throw error;
-        return data.length;
+        if (!firestore) throw new Error("Firestore não inicializado");
+        const batch = firestore.batch(); // usa batch para atomicidade
+        let count = 0;
+        for (const p of productsArray) {
+          const categoria = p.categoria || Category.SCREEN;
+          const colRef = firestore.collection('categorias').doc(categoria).collection('produtos');
+          const newDocRef = colRef.doc(); // gera id
+          const { id, ...rest } = p;
+          batch.set(newDocRef, { ...rest, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+          count++;
+        }
+        await batch.commit();
+        return count;
       },
 
-      removeProduct: async (token, id) => {
-        if (!supabase) return;
-        const { error } = await supabase.from('produtos').delete().eq('id', id);
-        if (error) throw error;
+      removeProduct: async (token, id, categoria) => {
+        if (!firestore) throw new Error("Firestore não inicializado");
+        if (!id || !categoria) throw new Error("Para remover informe id e categoria");
+        await firestore.collection('categorias').doc(categoria).collection('produtos').doc(id).delete();
         return true;
       }
     };
@@ -155,12 +205,9 @@
     const FilterBar = ({ category, products, activeFilters, onFilterChange }) => {
         if (category === 'Todos') return null;
 
-        // 1. Identificar quais campos devem aparecer para esta categoria
         const fieldsToShow = FILTERS_CONFIG[category] || [];
         if (fieldsToShow.length === 0) return null;
 
-        // 2. Extrair valores únicos existentes nos produtos para criar os <options>
-        // Isso faz o filtro ser "inteligente" (só mostra o que tem no banco)
         const filterOptions = useMemo(() => {
             const options = {};
             fieldsToShow.forEach(field => {
@@ -197,14 +244,12 @@
                             </select>
                         </div>
                     ))}
-                    {/* Botão para limpar filtros */}
                     {Object.keys(activeFilters).some(k => activeFilters[k]) && (
                         <div className="flex items-end">
                             <button 
                                 onClick={() => {
                                     const cleared = {};
                                     fieldsToShow.forEach(f => cleared[f] = '');
-                                    // Hacky way to reset, better handled in parent but works here visually
                                     fieldsToShow.forEach(f => onFilterChange(f, ''));
                                 }} 
                                 className="text-xs text-red-500 hover:text-red-700 underline pb-2"
@@ -235,7 +280,7 @@
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="bg-indigo-600 px-6 py-4 flex justify-between items-center"><h2 className="text-xl font-bold text-white">Importar em Lote</h2><button onClick={onClose} className="text-white hover:text-indigo-200">✕</button></div>
             <div className="p-6">
-              <textarea className="w-full h-64 border border-gray-300 rounded p-3 font-mono text-xs focus:ring-2 focus:ring-indigo-500 outline-none" value={jsonText} onChange={e => setJsonText(e.target.value)} placeholder='[{"nome": "...", ...}]' />
+              <textarea className="w-full h-64 border border-gray-300 rounded p-3 font-mono text-xs focus:ring-2 focus:ring-indigo-500 outline-none" value={jsonText} onChange={e => setJsonText(e.target.value)} placeholder='[{"nome": "...", "categoria":"Tela", "especificacoes": {...}}, ...]' />
               {error && <p className="text-red-500 text-xs mt-2 font-bold">{error}</p>}
             </div>
             <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3"><button onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded">Cancelar</button><button onClick={handleImport} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded hover:bg-indigo-700">Importar</button></div>
@@ -248,16 +293,14 @@
       if (!product) return null;
       
       const [activeImage, setActiveImage] = useState(product.imagens ? product.imagens[0] : "");
-      const [isZoomed, setIsZoomed] = useState(false); // Estado para controlar o Zoom Tela Cheia
+      const [isZoomed, setIsZoomed] = useState(false);
 
-      // Atualiza a imagem ativa quando o produto muda
       useEffect(() => { 
           if(product && product.imagens && product.imagens.length > 0) setActiveImage(product.imagens[0]); 
       }, [product]);
 
       return (
         <>
-          {/* MODAL PADRÃO */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
               <div className="bg-[#16a34a] px-6 py-4 flex justify-between items-center shrink-0">
@@ -267,14 +310,7 @@
               
               <div className="p-8 overflow-y-auto modal-scroll max-h-[85vh]">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  
-                  {/* COLUNA DA ESQUERDA - IMAGENS */}
                   <div className="flex flex-col">
-                    {/* IMAGEM PRINCIPAL 
-                        - Cursor vira Lupa (cursor-zoom-in)
-                        - Efeito Hover suave (scale)
-                        - Clique ativa o modo Tela Cheia
-                    */}
                     <div 
                         className="w-full h-96 rounded-lg overflow-hidden border border-gray-200 mb-4 bg-white flex items-center justify-center relative shadow-sm group cursor-zoom-in"
                         onClick={() => setIsZoomed(true)}
@@ -290,13 +326,11 @@
                           <span className="text-gray-400">Sem imagem</span>
                       )}
                       
-                      {/* Dica visual de zoom */}
                       <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                         Clique para ampliar 🔍
                       </div>
                     </div>
                     
-                    {/* Miniaturas */}
                     <div className="flex gap-3 mb-6 overflow-x-auto py-2">
                       {product.imagens && product.imagens.map((img, idx) => (
                         <div key={idx} onClick={() => setActiveImage(img)} 
@@ -314,7 +348,6 @@
                     </div>
                   </div>
 
-                  {/* COLUNA DA DIREITA - DADOS */}
                   <div>
                     <h3 className="text-lg font-bold text-gray-900 mb-3 border-b pb-2">Especificações Técnicas</h3>
                     <div className="rounded-lg border border-gray-100 overflow-hidden text-sm shadow-sm">
@@ -340,16 +373,11 @@
             </div>
           </div>
 
-          {/* === SUPER ZOOM (LIGHTBOX) === 
-              Só aparece se isZoomed for TRUE.
-              Fica por cima de TUDO (z-index 60).
-          */}
           {isZoomed && (
             <div 
                 className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 animate-fade-in"
-                onClick={() => setIsZoomed(false)} // Fecha ao clicar fora
+                onClick={() => setIsZoomed(false)}
             >
-                {/* Botão Fechar Gigante */}
                 <button 
                     onClick={() => setIsZoomed(false)}
                     className="absolute top-5 right-5 text-white/70 hover:text-white text-5xl font-light focus:outline-none z-50"
@@ -357,11 +385,10 @@
                     &times;
                 </button>
 
-                {/* Imagem em Resolução Máxima */}
                 <img 
                     src={activeImage} 
                     className="max-w-full max-h-full object-contain shadow-2xl rounded-sm"
-                    onClick={(e) => e.stopPropagation()} // Clicar na imagem não fecha
+                    onClick={(e) => e.stopPropagation()}
                 />
                 
                 <p className="absolute bottom-5 text-white/50 text-sm">Pressione ESC ou clique fora para fechar</p>
@@ -380,7 +407,6 @@
       useEffect(() => {
         if (productToEdit) {
           setTipoProduto(productToEdit.categoria);
-          // Carrega as imagens existentes nos campos certos
           const imgs = productToEdit.imagens || [];
           setForm({
             nome: productToEdit.nome,
@@ -399,30 +425,35 @@
       const handleTypeChange = (e) => { setTipoProduto(e.target.value); if (!productToEdit) setForm({}); };
       const handleChange = (e) => { const { name, value } = e.target; setForm(prev => ({ ...prev, [name]: value })); };
       
-      const handleSubmit = (e) => {
+      const handleSubmit = async (e) => {
         e.preventDefault();
-        // Remove campos de controle para não irem para as especificações
         const { nome, foto1, foto2, foto3, foto4, plug_imagem, ...specs } = form;
-        
-        // Junta todas as fotos em uma lista limpa (remove vazios)
-        // Se for fonte e tiver plug_imagem antigo, usa como fallback
         const mainImage = foto1 || plug_imagem;
         const imagensFinais = [mainImage, foto2, foto3, foto4].filter(img => img && img.trim() !== '');
-        
-        // Se não tiver nenhuma imagem, coloca um placeholder
         if (imagensFinais.length === 0) imagensFinais.push("https://placehold.co/400x300?text=Sem+Imagem");
 
         const productData = {
-          id: productToEdit?.id, 
+          id: productToEdit?.id,
           nome: nome || `${tipoProduto} ${form.marca || ''} ${form.modelo || ''}`,
           categoria: tipoProduto,
           descricao: `Produto ${form.marca || ''}. SKU: ${form.sku || 'N/A'}`,
           imagens: imagensFinais,
           especificacoes: specs
         };
-        onSave(productData);
-        onClose();
-        setForm({});
+
+        try {
+          if (productToEdit && productToEdit.id) {
+            await Server.updateProduct(localStorage.getItem('authToken'), productData);
+          } else {
+            await Server.addProduct(localStorage.getItem('authToken'), productData);
+          }
+          onSave && onSave(productData);
+        } catch (err) {
+          alert("Erro ao salvar: " + err.message);
+        } finally {
+          onClose();
+          setForm({});
+        }
       };
 
       // Campos específicos de cada categoria
@@ -502,12 +533,10 @@
               </div>
               
               <form onSubmit={handleSubmit}>
-                {/* Campos de Especificação */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     {renderFields()}
                 </div>
 
-                {/* Área Exclusiva para Fotos (4 Campos) */}
                 <div className="border-t border-gray-100 pt-6">
                     <h3 className="text-sm font-bold text-gray-700 uppercase mb-4 flex items-center gap-2">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -609,7 +638,13 @@
         setFilteredProducts(result);
       }, [products, selectedCategory, searchQuery, specFilters]);
 
-      const logout = () => { localStorage.removeItem('authToken'); setToken(null); };
+      const logout = async () => { 
+        try {
+          if (auth) await auth.signOut();
+        } catch (e) { console.warn("Erro no signOut:", e); }
+        localStorage.removeItem('authToken'); 
+        setToken(null); 
+      };
 
       const handleSaveProduct = async (productData) => {
         if (!token) return;
@@ -630,10 +665,10 @@
         } catch (e) { alert("Erro: " + e.message); }
       };
 
-      const handleRemoveProduct = async (e, id) => {
+      const handleRemoveProduct = async (e, id, categoria) => {
         e.stopPropagation();
         if (confirm("Remover?")) { 
-            try { await Server.removeProduct(token, id); fetchProducts(); }
+            try { await Server.removeProduct(token, id, categoria); fetchProducts(); }
             catch(e) { alert("Erro: " + e.message); }
         }
       };
@@ -642,17 +677,58 @@
       const openNewModal = () => { setProductToEdit(null); setIsFormModalOpen(true); };
 
       const LoginScreen = ({ onLogin }) => {
-        const [u, setU] = useState('Leandro'); const [p, setP] = useState('Santos'); const [load, setLoad] = useState(false);
-        const sub = async (e) => { e.preventDefault(); setLoad(true); const r = await Server.login(u, p); setLoad(false); if(r) { localStorage.setItem('authToken', r.token); onLogin(); } else alert('Use: Leandro / Santos'); };
+        const [email, setEmail] = useState("");
+        const [password, setPassword] = useState("");
+        const [loading, setLoading] = useState(false);
+
+        const submit = async (e) => {
+          e.preventDefault();
+          setLoading(true);
+
+          const result = await Server.login(email, password);
+          setLoading(false);
+
+          if (result) {
+            localStorage.setItem("authToken", result.token);
+            onLogin();
+          } else {
+            alert("Email ou senha inválidos.");
+          }
+        };
+
         return (
-          <div className="min-h-screen flex items-center justify-center bg-gray-100"><div className="bg-white p-8 rounded-xl shadow-lg w-96">
-            <h1 className="text-2xl font-bold text-center text-green-700 mb-6">bringIT Admin</h1>
-            <form onSubmit={sub} className="space-y-4">
-              <input value={u} onChange={e=>setU(e.target.value)} className="w-full border p-2 rounded" placeholder="Usuário" />
-              <input type="password" value={p} onChange={e=>setP(e.target.value)} className="w-full border p-2 rounded" placeholder="Senha" />
-              <button disabled={load} className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700">{load?'...':'Entrar'}</button>
-            </form>
-          </div></div>
+          <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="bg-white p-8 rounded-xl shadow-lg w-96">
+              <h1 className="text-2xl font-bold text-center text-green-700 mb-6">
+                bringIT Admin
+              </h1>
+
+              <form onSubmit={submit} className="space-y-4">
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border p-2 rounded"
+                  placeholder="Email"
+                  type="email"
+                />
+
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border p-2 rounded"
+                  placeholder="Senha"
+                />
+
+                <button
+                  disabled={loading}
+                  className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700"
+                >
+                  {loading ? "Entrando..." : "Entrar"}
+                </button>
+              </form>
+            </div>
+          </div>
         );
       };
 
@@ -750,7 +826,7 @@
                           <span className="text-xs text-green-600 font-bold hover:underline uppercase">Ver Detalhes</span>
                           <div className="flex gap-2">
                             <button onClick={(e) => openEditModal(e, product)} className="text-gray-400 hover:text-blue-500 hover:bg-blue-50 p-1.5 rounded-full transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                            <button onClick={(e) => handleRemoveProduct(e, product.id)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                            <button onClick={(e) => handleRemoveProduct(e, product.id, product.categoria)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                           </div>
                         </div>
                       </div>
@@ -772,5 +848,3 @@
   </script>
 </body>
 </html>
-
-
