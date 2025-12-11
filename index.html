@@ -351,12 +351,13 @@
                   <div>
                     <h3 className="text-lg font-bold text-gray-900 mb-3 border-b pb-2">Especificações Técnicas</h3>
                     <div className="rounded-lg border border-gray-100 overflow-hidden text-sm shadow-sm">
-                      {product.especificacoes && ORDEM_ESPECS.filter(k => product.especificacoes[k]).map((key, index) => (
+                      {product.especificacoes && Object.entries(product.especificacoes).map(([key, value], index) => (
                       <div key={key} className={`flex justify-between py-3 px-4 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
                         <span className="font-bold text-gray-600 capitalize">{key.replace(/_/g, ' ')}:</span>
-                        <span className="text-gray-800 text-right ml-4 font-medium">{product.especificacoes[key]}</span>
+                        <span className="text-gray-800 text-right ml-4 font-medium">{value}</span>
                       </div>
                     ))}
+
 
                       {(!product.especificacoes || Object.keys(product.especificacoes).length === 0) && (
                           <div className="p-4 text-gray-400 text-center italic">Sem especificações cadastradas.</div>
@@ -849,4 +850,5 @@
   </script>
 </body>
 </html>
+
 
