@@ -16,6 +16,29 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <script>
+    const ORDEM_ESPECS = [
+      "sku",
+      "marca",
+      "modelo",
+      "voltagem",
+      "capacidade",
+      "celulas",
+      "mah",
+      "wh",
+      "amperagem",
+      "potencia",
+      "idioma",
+      "moldura",
+      "backlight",
+      "tipo",
+      "cor",
+      "tamanho",
+      "resolucao",
+      "iluminacao",
+      "conector",
+      "fixacao",
+      "acabamento"
+    ];
     // sua firebaseConfig (conforme você enviou)
     const firebaseConfig = {
       apiKey: "AIzaSyAHp6za_KGlDvUEL4GnMLUK5llOgCOdMMk",
@@ -289,29 +312,7 @@
       );
     };
 
-    const ORDEM_ESPECS = [
-      "sku",
-      "marca",
-      "modelo",
-      "voltagem",
-      "capacidade",
-      "celulas",
-      "mah",
-      "wh",
-      "amperagem",
-      "potencia",
-      "idioma",
-      "moldura",
-      "backlight",
-      "tipo",
-      "cor",
-      "tamanho",
-      "resolucao",
-      "iluminacao",
-      "conector",
-      "fixacao",
-      "acabamento"
-    ];
+
     const ProductModal = ({ product, onClose }) => {
       if (!product) return null;
       
@@ -373,22 +374,22 @@
 
                   <div>
                     <h3 className="text-lg font-bold text-gray-900 mb-3 border-b pb-2">Especificações Técnicas</h3>
-                   <div className="rounded-lg border border-gray-100 overflow-hidden text-sm shadow-sm">
-                    product.especificacoes &&
-                    ORDEM_ESPECS.filter(key => product.especificacoes[key]).map((key, index) => (
-                      <div
-                        key={key}
-                        className={`flex justify-between py-3 px-4 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
-                      >
-                        <span className="font-bold text-gray-600 capitalize">
-                          {key.replace(/_/g, ' ')}:
-                        </span>
-                        <span className="text-gray-800 text-right ml-4 font-medium">
-                          {product.especificacoes[key]}
-                        </span>
-                      </div>
-                    ))
-                  }
+                     <div className="rounded-lg border border-gray-100 overflow-hidden text-sm shadow-sm">
+                      {product.especificacoes &&
+                        ORDEM_ESPECS.filter(key => product.especificacoes[key]).map((key, index) => (
+                          <div
+                            key={key}
+                            className={`flex justify-between py-3 px-4 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
+                          >
+                            <span className="font-bold text-gray-600 capitalize">
+                              {key.replace(/_/g, ' ')}:
+                            </span>
+                            <span className="text-gray-800 text-right ml-4 font-medium">
+                              {product.especificacoes[key]}
+                            </span>
+                          </div>
+                        ))
+                      }
 
 
                       {(!product.especificacoes || Object.keys(product.especificacoes).length === 0) && (
@@ -882,6 +883,7 @@
   </script>
 </body>
 </html>
+
 
 
 
