@@ -78,7 +78,7 @@
       "fixacao",
       "pn",
       "tipo de conector",
-      "posicao do conector",
+      "posicaodoconector",
       "largura",
       "tecnologia",
       "touchscreen",
@@ -95,7 +95,7 @@
     };
 
     const FILTERS_CONFIG = {
-        [Category.SCREEN]: ['sku','marca','tamanho', 'resolucao', 'iluminacao', 'fixacao', 'acabamento','tipo de conector','posicao do conector','largura','tecnologia','touchscreen', 'frequencia hz', 'pcb'],
+        [Category.SCREEN]: ['sku','marca','tamanho', 'resolucao', 'iluminacao', 'fixacao', 'acabamento','tipo de conector','posicaodoconector','largura','tecnologia','touchscreen', 'frequencia hz', 'pcb'],
         [Category.BATTERY]: ['voltagem', 'capacidade', 'cor', 'tipo'],
         [Category.KEYBOARD]: ['cor', 'idioma', 'moldura', 'backlight', 'marca'],
         [Category.POWER_SUPPLY]: ['voltagem', 'amperagem', 'potencia', 'conector']
@@ -483,7 +483,7 @@
                     <SelectField label="Acabamento" name="acabamento" options={['Brilhante', 'Fosco']} value={form.acabamento} onChange={handleChange} />
                     <InputField label="Tamanho" name="tamanho" required value={form.tamanho} onChange={handleChange} />
                     <InputField label="Pn" name="pn" required value={form.pn} onChange={handleChange} />
-                    <InputField label="Posição do conector" name="posicao do conector" required value={form.posicao do conector} onChange={handleChange} />
+                    <InputField label="Posição do conector" name="posicaodoconector" required value={form.posicao do conector} onChange={handleChange} />
                     <InputField label="Tecnologia" name="tecnologia" required value={form.tecnologia} onChange={handleChange} />
                     
                     
@@ -803,6 +803,7 @@
   </script>
 </body>
 </html>
+
 
 
 
