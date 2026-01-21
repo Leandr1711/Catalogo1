@@ -475,7 +475,7 @@
                     <InputField label="Conector" name="conector" value={form.conector} onChange={handleChange} />
                 </>
             );
-          case: 'Tela':
+          default:
             return (
                 <>
                     <InputField label="SKU" name="sku" required value={form.sku} onChange={handleChange} />
