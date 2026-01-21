@@ -71,7 +71,7 @@
       "idioma",
       "moldura",
       "backlight",
-      "Tamanho",
+      "tamanho",
       "resolucao",
       "iluminacao",
       "conector",
@@ -95,7 +95,7 @@
     };
 
     const FILTERS_CONFIG = {
-        [Category.SCREEN]: ['tamanho', 'resolucao', 'iluminacao', 'conector', 'fixacao', 'acabamento','tipo de conector','posição do conector','largura','tecnologia','touchscreen', 'frequencia hz', 'pcb'],
+        [Category.SCREEN]: ['tamanho', 'resolucao', 'iluminacao', 'fixacao', 'acabamento','tipo de conector','posicao do conector','largura','tecnologia','touchscreen', 'frequencia hz', 'pcb'],
         [Category.BATTERY]: ['voltagem', 'capacidade', 'cor', 'tipo'],
         [Category.KEYBOARD]: ['cor', 'idioma', 'moldura', 'backlight', 'marca'],
         [Category.POWER_SUPPLY]: ['voltagem', 'amperagem', 'potencia', 'conector']
@@ -479,11 +479,10 @@
                 <>
                     <InputField label="SKU" name="sku" required value={form.sku} onChange={handleChange} />
                     <InputField label="Marca" name="marca" required value={form.marca} onChange={handleChange} />
-                    <InputField label="Tamanho" name="Tamanho" value={form.Tamanho} onChange={handleChange} />
                     <InputField label="Resolução" name="resolucao" value={form.resolucao} onChange={handleChange} />
-                    <SelectField label="Iluminação" name="iluminacao" options={['LED', 'CCFL', 'OLED']} value={form.iluminacao} onChange={handleChange} />
+                    <SelectField label="Iluminação" name="iluminacao" value={form.iluminacao} onChange={handleChange} />
                     <InputField label="Conector" name="conector" value={form.conector} onChange={handleChange} />
-                    <SelectField label="Fixação" name="fixacao" options={['Abas', 'Sem Fixação']} value={form.fixacao} onChange={handleChange} />
+                    <SelectField label="Fixação" name="fixacao" value={form.fixacao} onChange={handleChange} />
                     <SelectField label="Acabamento" name="acabamento" options={['Brilhante', 'Fosco']} value={form.acabamento} onChange={handleChange} />
                     <SelectField label="Tamanho" name="tamanho" value={form.acabamento} onChange={handleChange} />
                 </>
@@ -802,6 +801,7 @@
   </script>
 </body>
 </html>
+
 
 
 
