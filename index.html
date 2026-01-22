@@ -72,13 +72,13 @@
       "moldura",
       "backlight",
       "tamanho",
-      "resolucao",
-      "iluminacao",
+      "resolução",
+      "iluminação",
       "conector",
-      "fixacao",
+      "fixação",
       "pn",
       "tipo de conector",
-      "posicao_do_conector",
+      "posição do conector",
       "largura",
       "tecnologia",
       "touchscreen",
@@ -95,7 +95,7 @@
     };
 
     const FILTERS_CONFIG = {
-        [Category.SCREEN]: ['sku','marca','tamanho', 'resolucao', 'iluminacao', 'fixacao', 'acabamento','tipo de conector','posicao_do_conector','largura','tecnologia','touchscreen', 'frequencia hz', 'pcb'],
+        [Category.SCREEN]: ['sku','marca','tamanho', 'resolução', 'iluminação', 'fixação', 'acabamento','tipo de conector','posição do conector','largura','tecnologia','touchscreen', 'frequencia hz', 'pcb'],
         [Category.BATTERY]: ['voltagem', 'capacidade', 'cor', 'tipo'],
         [Category.KEYBOARD]: ['cor', 'idioma', 'moldura', 'backlight', 'marca'],
         [Category.POWER_SUPPLY]: ['voltagem', 'amperagem', 'potencia', 'conector']
@@ -479,10 +479,10 @@
                 <>
                     <InputField label="SKU" name="sku" required value={form.sku} onChange={handleChange} />
                     <InputField label="Marca" name="marca" required value={form.marca} onChange={handleChange} />
-                    <InputField label="Conector" name="conector" value={form.conector} onChange={handleChange} />
                     <InputField label="Tamanho" name="tamanho" required value={form.tamanho} onChange={handleChange} />
-                    <InputField label="Resolução" name="resolucao" required value={form.resolucao} onChange={handleChange} />
-                    <InputField label="Posição do conector" name="posicao_do_conector" required value={form.posicao_do_conector} onChange={handleChange} />
+                    <SelectField label="Conector" name="conector"  options={['30p (LVDS)', '30p (eDP)','40p (LVDS)','40p (eDP)','50p (eDP)']} value={form.conector} onChange={handleChange} />
+                    <SelectField label="Resolução" name="resolucao" options={['3840x2160', '2560x1440','1920x1080','1600x900','1366x768','1280x720']} value={form.resolucao} onChange={handleChange} />
+                    <SelectField label="Posição do conector" name="posicao_do_conector" options={['Inferior direito', 'Inferior esquerdo','Superior esquerdo', 'Superior direito','Central']} value={form.posicao_do_conector} onChange={handleChange} />
                     <SelectField label="Acabamento" name="acabamento" options={['Brilhante', 'Fosco']} value={form.acabamento} onChange={handleChange} />
                     
                 </>
@@ -801,6 +801,7 @@
   </script>
 </body>
 </html>
+
 
 
 
