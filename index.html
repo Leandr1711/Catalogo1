@@ -84,7 +84,10 @@
       "touchscreen",
       "frequencia hz",
       "pcb",
-      "acabamento"
+      "acabamento",
+      "pointstick",
+      "part number",
+      "touchpad"
     ];
 
     const Category = {
@@ -96,8 +99,8 @@
 
     const FILTERS_CONFIG = {
         [Category.SCREEN]: ['sku','marca','tamanho', 'resolução', 'iluminação', 'fixação', 'acabamento','tipo de conector','posição do conector','largura','tecnologia','touchscreen', 'frequencia hz', 'pcb'],
-        [Category.BATTERY]: ['voltagem', 'capacidade', 'cor', 'tipo'],
-        [Category.KEYBOARD]: ['cor', 'idioma', 'moldura', 'backlight', 'marca'],
+        [Category.BATTERY]: ['sku','voltagem', 'capacidade', 'cor', 'tipo'],
+        [Category.KEYBOARD]: ['sku','cor', 'idioma', 'moldura', 'backlight', 'marca','numerico','part number','pointstick', 'touchpad'],
         [Category.POWER_SUPPLY]: ['voltagem', 'amperagem', 'potencia', 'conector']
     };
 
@@ -448,15 +451,16 @@
                     <InputField label="Marca" name="marca" required value={form.marca} onChange={handleChange} />
                     <InputField label="Modelo" name="modelo" value={form.modelo} onChange={handleChange} />
                     <InputField label="Idioma" name="idioma" value={form.idioma} onChange={handleChange} />
-                    <InputField label="Cor" name="cor" value={form.cor} onChange={handleChange} />
+                    <SelectField label="Cor" name="cor" options={['Preto', 'Cinza']} value={form.moldura} onChange={handleChange} />
                     <SelectField label="Moldura" name="moldura" options={['Com Moldura', 'Sem Moldura']} value={form.moldura} onChange={handleChange} />
                     <SelectField label="Backlight" name="backlight" options={['Sim', 'Não']} value={form.backlight} onChange={handleChange} />
+                    <SelectField label="Pointstick" name="pointstick" options={['Sim', 'Não']} value={form.moldura} onChange={handleChange} />
                 </>
             );
           case 'Bateria':
             return (
                 <>
-                    <InputField label="SKU" name="sku" required value={form.sku} onChange={handleChange} />
+                    InputField label="SKU" name="sku" required value={form.sku} onChange={handleChange} />
                     <InputField label="Marca" name="marca" required value={form.marca} onChange={handleChange} />
                     <InputField label="Voltagem (V)" name="voltagem" value={form.voltagem} onChange={handleChange} />
                     <InputField label="Capacidade (mAh)" name="capacidade" value={form.capacidade} onChange={handleChange} />
@@ -801,6 +805,7 @@
   </script>
 </body>
 </html>
+
 
 
 
